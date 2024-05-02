@@ -1,32 +1,34 @@
 #!/usr/bin/python3
-"""Export data from a REST API to a JSON file"""
+"""cré fichier json avec données d'une api dont l'id est passé en argument"""
 import json
 import requests
-from sys import argv, exit
+from sys import argv
 
-API_URL = "https://jsonplaceholder.typicode.com"
 
 if __name__ == "__main__":
-    user_id = argv[1]
+    id = argv[1]
+    url_api = 'https://jsonplaceholder.typicode.com'
+    json_user = requests.get(url_api + "/users/" + id)
+    json_todo = requests.get(url_api + "/todos?userId=" + id)
 
-    response = requests.get(
-        f"{API_URL}/users/{user_id}/todos",
-        params={"_expand": "user"}
-    )
-    data = response.json()
-
-    if not len(data):
-        print("RequestError:", 404)
+    if json_todo.status_code != 200 or json_user.status_code != 200:
         exit(1)
 
-    user_tasks = {user_id: []}
-    for task in data:
-        task_dict = {
-            "task": task["title"],
-            "completed": task["completed"],
-            "username": task["user"]["username"]
-        }
-        user_tasks[user_id].append(task_dict)
+    data_user = json_user.json()
+    data_api_todos = json_todo.json()
 
-    with open(f"{user_id}.json", "w") as file:
-        json.dump(user_tasks, file)
+    liste_todos = []
+    for todo in data_api_todos:
+        dict_todos = {}
+
+        dict_todos["task"] = todo["title"]
+        dict_todos["completed"] = todo["completed"]
+        dict_todos["username"] = json_user.json()['username']
+
+        liste_todos.append(dict_todos)
+
+    dict_data_todo = {}
+    dict_data_todo[id] = liste_todos
+
+    with open(id + ".json", "w") as file:
+        json.dump(dict_data_todo, file)
