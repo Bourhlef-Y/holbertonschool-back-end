@@ -1,32 +1,33 @@
 #!/usr/bin/python3
-"""Export data from a REST API to a JSON file"""
+"""Returns inform about his/her (employee ID) TODO list progress
+and export data in the json format"""
+
+from requests import get
+from sys import argv
 import json
-import requests
-from sys import argv, exit
 
-API_URL = "https://jsonplaceholder.typicode.com"
 
-if __name__ == "__main__":
-    user_id = argv[1]
+url = "https://jsonplaceholder.typicode.com"
 
-    response = requests.get(
-        f"{API_URL}/users/{user_id}/todos",
-        params={"_expand": "user"}
-    )
-    data = response.json()
+if __name__ == '__main__':
 
-    if not len(data):
-        print("RequestError:", 404)
-        exit(1)
+    # get users info with ID
+    user_id = int(argv[1])
+    users = get(f"{url}/users/{user_id}").json()
 
-    user_tasks = {user_id: []}
-    for task in data:
-        task_dict = {
-            "task": task["title"],
-            "completed": task["completed"],
-            "username": task["user"]["username"]
-        }
-        user_tasks[user_id].append(task_dict)
+    # get todo list
+    todo = get(f"{url}/todos")
+    todo_data = todo.json()
 
-    with open(f"{user_id}.json", "w") as file:
-        json.dump(user_tasks, file)
+    user_dict = []
+    for task in todo_data:
+        if task["userId"] == user_id:
+            # save info in dictonnary
+            task_info = {"task": task["title"],
+                         "completed": task["completed"],
+                         "username": users["username"]}
+            # save info inside list
+            user_dict.append(task_info)
+
+    with open(f"{argv[1]}.json", "w", encoding="utf-8") as jsonfile:
+        json.dump({users["id"]: user_dict}, jsonfile)
