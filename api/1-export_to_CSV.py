@@ -1,28 +1,25 @@
 #!/usr/bin/python3
-"""Returns inform about his/her (employee ID) TODO list progress
-and export data in the CSV format"""
+"""Script that saves infos from a given employee into a .csv file"""
 
-from requests import get
+import csv
+import requests
 from sys import argv
-from csv import writer, QUOTE_ALL
 
-
-url = "https://jsonplaceholder.typicode.com"
+API_URL = 'https://jsonplaceholder.typicode.com'
 
 if __name__ == '__main__':
+    user = requests.get(f'{API_URL}/users/{argv[1]}').json()
+    todo_list = requests.get(f"{API_URL}/todos?userId={argv[1]}").json()
 
-    # get users info with ID
-    user_id = int(argv[1])
-    users = get(f"{url}/users/{user_id}").json()
+    with open(f"{argv[1]}.csv", mode='w') as csv_file:
+        csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
 
-    # get todo list
-    todo = get(f"{url}/todos")
-    todo_data = todo.json()
+        for task in todo_list:
+            csv_writer.writerow([
+                user['id'],
+                user['username'],
+                task['completed'],
+                task['title']
+            ])
 
-    with open(f"{argv[1]}.csv", "w", newline="") as csvfile:
-        csvwriter = writer(csvfile, quoting=QUOTE_ALL)
-
-        for task in todo_data:
-            if task["userId"] == user_id:
-                csvwriter.writerow([users["id"], users["username"],
-                                    task["completed"], task["title"]])
+    print(f"Data has been exported to {argv[1]}.csv")
