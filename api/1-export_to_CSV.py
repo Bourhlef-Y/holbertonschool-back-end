@@ -1,24 +1,25 @@
 #!/usr/bin/python3
-"""cré fichier csv avec données d'une api dont l'id est passé en argument"""
+"""Script that saves infos from a given employee into a .csv file"""
+
+import csv
 import requests
 from sys import argv
 
+API_URL = 'https://jsonplaceholder.typicode.com'
 
-if __name__ == "__main__":
-    id = argv[1]
-    url_api = 'https://jsonplaceholder.typicode.com'
-    json_user = requests.get(url_api + "/users/" + id)
-    json_todo = requests.get(url_api + "/todos?userId=" + id)
+if __name__ == '__main__':
+    user = requests.get(f'{API_URL}/users/{argv[1]}').json()
+    todo_list = requests.get(f"{API_URL}/todos?userId={argv[1]}").json()
 
-    data_user = json_user.json()
-    data_todos = json_todo.json()
+    with open(f"{argv[1]}.csv", mode='w') as csv_file:
+        csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
 
-    texte = ""
-    for todo in data_todos:
-        texte = texte + '"' + id + '"'
-        texte = texte + ',"' + data_user.get("username") + '"'
-        texte = texte + ',"' + str(todo.get("completed")) + '"'
-        texte = texte + ',"' + todo.get("title") + '"\n'
+        for task in todo_list:
+            csv_writer.writerow([
+                user['id'],
+                user['username'],
+                task['completed'],
+                task['title']
+            ])
 
-    with open(id + ".csv", "w") as file:
-        file.write(texte)
+    print(f"Data has been exported to {argv[1]}.csv")
