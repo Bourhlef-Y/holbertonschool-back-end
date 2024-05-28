@@ -1,24 +1,30 @@
 #!/usr/bin/python3
-"""cré fichier csv avec données d'une api dont l'id est passé en argument"""
+"""Returns information for a given employee ID using a REST API"""
+
 import requests
 from sys import argv
 
+API_URL = 'https://jsonplaceholder.typicode.com'
 
-if __name__ == "__main__":
-    id = argv[1]
-    url_api = 'https://jsonplaceholder.typicode.com'
-    json_user = requests.get(url_api + "/users/" + id)
-    json_todo = requests.get(url_api + "/todos?userId=" + id)
+if __name__ == '__main__':
+    # Tasks information
+    todos = requests.get(f'{API_URL}/todos?userId={argv[1]}')
+    todos_data = todos.json()
 
-    data_user = json_user.json()
-    data_todos = json_todo.json()
+    # User information
+    users = requests.get(f'{API_URL}/users/{argv[1]}')
+    users_data = users.json()
 
-    texte = ""
-    for todo in data_todos:
-        texte = texte + '"' + id + '"'
-        texte = texte + ',"' + data_user.get("username") + '"'
-        texte = texte + ',"' + str(todo.get("completed")) + '"'
-        texte = texte + ',"' + todo.get("title") + '"\n'
+    completed_tasks = [task for task in todos_data if task['completed']]
 
-    with open(id + ".csv", "w") as file:
-        file.write(texte)
+    user_name = users_data["name"]
+    len_completed_tasks = len(completed_tasks)
+    total_todo = len(todos_data)
+
+    print("Employee {} is done with tasks({}/{}):".format(
+            user_name,
+            len_completed_tasks,
+            total_todo))
+
+    for task in completed_tasks:
+        print(f"\t {task['title']}")
